@@ -8,6 +8,53 @@ const HV = {
     if (!base) throw new Error('Backend ainda não configurado. Edite config.js e informe a URL do Render.');
     return base + (String(path).startsWith('/') ? path : '/' + path);
   },
+
+  async request(path, options = {}) {
+    const url = this.api(path);
+    const method = String(options.method || 'GET').toUpperCase();
+    const timeoutMs = Number(options.timeoutMs || 15000);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const headers = { ...(options.headers || {}) };
+    let body = options.body;
+
+    // Para POSTs públicos usamos text/plain com JSON. É CORS-safelisted e evita
+    // preflight desnecessário entre Cloudflare Pages e Render.
+    if (options.json !== undefined) {
+      headers['Content-Type'] = options.contentType || 'text/plain;charset=UTF-8';
+      body = JSON.stringify(options.json);
+    }
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers,
+        body,
+        cache: options.cache || 'no-store',
+        signal: controller.signal
+      });
+      const text = await response.text();
+      let data = {};
+      try { data = text ? JSON.parse(text) : {}; } catch (_) { data = { message: text }; }
+      if (!response.ok) {
+        const err = new Error(data.message || `API respondeu HTTP ${response.status}.`);
+        err.status = response.status;
+        err.data = data;
+        throw err;
+      }
+      return data;
+    } catch (error) {
+      if (error?.name === 'AbortError') {
+        throw new Error('A API demorou para responder. Aguarde alguns segundos e tente novamente.');
+      }
+      if (error instanceof TypeError || /failed to fetch/i.test(String(error?.message || ''))) {
+        throw new Error(`Não foi possível conectar ao backend (${this.apiBase()}). Atualize a página e tente novamente.`);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timer);
+    }
+  },
   media(path) {
     const p = String(path || '');
     if (!p) return '';
@@ -79,10 +126,7 @@ const HV = {
     window.__hvt = setTimeout(() => t.classList.remove('show'), 2600);
   },
   async products() {
-    const url = this.api('/api/products') + `?v=${Date.now()}`;
-    const r = await fetch(url, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } });
-    if (!r.ok) throw new Error('Não foi possível carregar a loja.');
-    const data = await r.json();
+    const data = await this.request(`/api/products?v=${Date.now()}`, { timeoutMs: 15000 });
     return Array.isArray(data.products) ? data.products : [];
   },
   nav() {

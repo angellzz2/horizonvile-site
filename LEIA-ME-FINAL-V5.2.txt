@@ -1,0 +1,21 @@
+HORIZONVILLE SITE V5.2 FINAL
+
+Deploy: Cloudflare Pages.
+1. Extraia este ZIP.
+2. Envie TODO o conteúdo desta pasta para o deployment do horizonville-site.
+3. Não envie o ZIP como um arquivo dentro do site; envie os arquivos extraídos.
+4. Depois do deploy, abra horizonville.cc/cart?v=5.2 e pressione Ctrl+F5 uma vez.
+
+Correções principais:
+- checkout reconhece produto ID personalizado;
+- modal obrigatório antes da compra;
+- campo ID desejado + Verificar ID;
+- finalizar compra bloqueado até a verificação;
+- chamadas públicas usam text/plain JSON para evitar preflight CORS desnecessário;
+- mensagens de rede em português em vez de "Failed to fetch";
+- timeout e repetição segura nas consultas GET;
+- produto exclusivo é o único que exige quantidade;
+- cache-busting V5.2 em todos os scripts.
+
+Backend esperado em config.js:
+https://horizonville-backend.onrender.com

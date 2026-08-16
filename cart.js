@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const BUILD = '20260816-v5';
+  const BUILD = '20260816-v5.2-final';
   let couponCode = '';
   let couponDiscount = 0;
   let idNoticeAccepted = false;
@@ -41,6 +41,11 @@
 
   function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  function requestId(prefix = 'req') {
+    if (globalThis.crypto?.randomUUID) return `${prefix}-${crypto.randomUUID()}`;
+    return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
   }
 
   function idField() { return document.getElementById('desiredIdField'); }
@@ -155,30 +160,28 @@
     setVerifyMessage('Consultando o servidor MTA...');
 
     try {
-      const start = await fetch(HV.api('/api/id-checks'), {
+      const started = await HV.request('/api/id-checks', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
-        cache: 'no-store',
-        body: JSON.stringify({ account, desiredId })
+        json: { account, desiredId, clientRequestId: requestId('idcheck') },
+        timeoutMs: 20000
       });
-      const started = await start.json().catch(() => ({}));
-      if (!start.ok) throw new Error(started.message || 'Não foi possível iniciar a verificação.');
       if (!started.token) throw new Error('O backend não retornou o código da verificação.');
 
       let result = null;
-      for (let attempt = 0; attempt < 40; attempt++) {
+      for (let attempt = 0; attempt < 50; attempt++) {
         await sleep(500);
-        const response = await fetch(HV.api(`/api/id-checks/${encodeURIComponent(started.token)}`), {
-          cache: 'no-store',
-          headers: { 'Cache-Control': 'no-cache' }
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.message || 'Falha ao consultar a verificação.');
-        if (data.status === 'done' || data.status === 'failed') {
-          result = data;
-          break;
+        try {
+          const data = await HV.request(`/api/id-checks/${encodeURIComponent(started.token)}?v=${Date.now()}`, { timeoutMs: 10000 });
+          if (data.status === 'done' || data.status === 'failed') {
+            result = data;
+            break;
+          }
+          setVerifyMessage('Consultando a database do servidor...');
+        } catch (pollError) {
+          // Um GET é seguro para repetir. Pequenas oscilações do Render não cancelam a compra.
+          if (attempt >= 49) throw pollError;
+          setVerifyMessage('Servidor respondeu devagar. Tentando novamente...');
         }
-        setVerifyMessage('Consultando a database do servidor...');
       }
 
       if (!result) throw new Error('O servidor MTA não respondeu à verificação. Confirme se o hv_id_shop está iniciado.');
@@ -286,14 +289,11 @@
     const msg = document.getElementById('couponMsg');
     if (!code) return;
     try {
-      const response = await fetch(HV.api('/api/coupons/validate'), {
+      const data = await HV.request('/api/coupons/validate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        cache: 'no-store',
-        body: JSON.stringify({ code, items: cart() })
+        json: { code, items: cart() },
+        timeoutMs: 15000
       });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.message || 'Cupom inválido');
       couponCode = data.code;
       couponDiscount = Number(data.discountPercent || 0);
       msg.className = 'coupon-msg ok';
@@ -334,11 +334,9 @@
     }
 
     try {
-      const response = await fetch(HV.api('/api/checkout'), {
+      const data = await HV.request('/api/checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        cache: 'no-store',
-        body: JSON.stringify({
+        json: {
           items,
           couponCode,
           account,
@@ -347,10 +345,9 @@
           paymentMethod: pay,
           desiredId: customId ? desiredId : null,
           verificationToken: customId ? idVerification.token : null
-        })
+        },
+        timeoutMs: 20000
       });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.message || 'Não foi possível criar o pedido.');
 
       HV.save([]);
       const suffix = data.order?.desiredId ? ` ID solicitado: ${data.order.desiredId}. A entrega será automática após a aprovação do pagamento.` : '';
@@ -367,8 +364,7 @@
 
   async function loadPaymentMode() {
     try {
-      const response = await fetch(HV.api('/api/config'), { cache: 'no-store' });
-      const data = await response.json();
+      const data = await HV.request(`/api/config?v=${Date.now()}`, { timeoutMs: 10000 });
       if (data.paymentMode === 'demo') {
         document.getElementById('paymentNote').textContent = 'Modo demonstração ativo: o checkout funciona sem cobrança real. Não use em produção.';
       }
@@ -386,6 +382,14 @@
     await loadPaymentMode();
 
     if (hasIdProduct()) {
+      try {
+        const network = await HV.request(`/api/network-test?v=${Date.now()}`, { timeoutMs: 10000 });
+        if (network.build !== 'v5.2-final') {
+          setVerifyMessage('O backend ainda não está na versão final. Faça o deploy do backend V5.2.', 'bad');
+        }
+      } catch (e) {
+        setVerifyMessage(e.message, 'bad');
+      }
       // O pré-carregador inline já pode ter aberto o modal; garantimos novamente aqui.
       setTimeout(openIdNotice, 120);
     } else {
