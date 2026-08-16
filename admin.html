@@ -32,12 +32,13 @@
 <div class="field"><label>Preço de venda (R$)</label><input id="pPrice" type="number" min="0" step="0.01" placeholder="49.90"></div>
 <div class="field"><label>Custo unitário (R$)</label><input id="pCostPrice" type="number" min="0" step="0.01" placeholder="0.00"></div>
 <div class="field"><label>Categoria</label><select id="pCategory"><option>VIPs</option><option>Carros</option><option>Gemas</option><option>Outros</option></select></div>
+<div class="field"><label>Tipo de produto</label><select id="pProductType"><option value="normal">Produto normal</option><option value="custom_id">ID personalizado</option></select><small class="muted">Em ID personalizado, o checkout pede o novo ID do jogador.</small></div>
 <div class="field"><label>Selo / badge</label><input id="pBadge" placeholder="Ex.: 30 dias"></div>
 <div class="field"><label>Ícone</label><input id="pIcon" placeholder="Ex.: ◆, ★, 💎, 🚗"></div>
 <div class="field"><label>Status</label><select id="pActive"><option value="true">Ativo</option><option value="false">Pausado</option></select></div>
 <div class="field"><label>Produto exclusivo?</label><select id="pExclusive"><option value="false">Não</option><option value="true">Sim</option></select></div>
 <div class="field"><label>Produto limitado?</label><select id="pLimited"><option value="false">Não</option><option value="true">Sim</option></select></div>
-<div class="field"><label>Quantidade disponível</label><input id="pStock" type="number" min="0" step="1" value="0" placeholder="Ex.: 20"></div>
+<div class="field" id="pStockField" style="display:none"><label>Quantidade disponível</label><input id="pStock" type="number" min="0" step="1" placeholder="Ex.: 20"><small class="muted">Obrigatório somente para produtos exclusivos.</small></div>
 <div class="field span-2"><label>Bônus ao comprar</label><input id="pBonus" placeholder="Ex.: +300 gemas, item extra, 10 dias adicionais"></div>
 <div class="field span-2"><label>Descrição</label><input id="pDescription" placeholder="Descrição curta do produto"></div>
 <div class="field span-2"><label>Imagem do produto</label><input id="pImageFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif"><div class="image-upload-row"><input id="pImage" type="text" readonly placeholder="Nenhuma imagem enviada"><button id="uploadProductImage" type="button" class="btn ghost">Enviar imagem</button><button id="clearProductImage" type="button" class="btn ghost">Remover</button></div><div id="imagePreview" class="image-preview"><span>Prévia da imagem</span></div><small class="muted">PNG, JPG, WEBP ou GIF. Máximo recomendado: 5 MB.</small></div>
@@ -48,7 +49,7 @@
 
 <div id="couponsView" class="hidden"><div class="card panel"><h2>Criar cupom</h2><div class="form-grid"><div class="field"><label>Código</label><input id="cCode" placeholder="HORIZON20"></div><div class="field"><label>Desconto (%)</label><input id="cDiscount" type="number" min="1" max="100" value="10"></div><div class="field"><label>Máximo de usos</label><input id="cMax" type="number" min="0" value="0"><small class="muted">0 = ilimitado</small></div><div class="field"><label>Validade</label><input id="cExp" type="date"></div></div><button id="createCoupon" class="btn orange" style="margin-top:14px">Criar cupom</button></div><div class="card panel"><h2>Cupons</h2><div class="table-wrap"><table class="table"><thead><tr><th>Código</th><th>Desconto</th><th>Usos</th><th>Validade</th><th>Status</th><th>Ações</th></tr></thead><tbody id="couponRows"></tbody></table></div></div></div>
 
-<div id="ordersView" class="hidden"><div class="card panel"><h2>Pedidos e vendas</h2><div class="table-wrap"><table class="table"><thead><tr><th>Pedido</th><th>Conta</th><th>Total</th><th>Lucro est.</th><th>Pagamento</th><th>Entrega</th><th>Data</th></tr></thead><tbody id="orderRows"></tbody></table></div></div></div>
+<div id="ordersView" class="hidden"><div class="card panel"><h2>Pedidos e vendas</h2><div class="table-wrap"><table class="table"><thead><tr><th>Pedido</th><th>Conta</th><th>Total</th><th>Lucro est.</th><th>Pagamento</th><th>Entrega</th><th>ID desejado</th><th>Data</th></tr></thead><tbody id="orderRows"></tbody></table></div></div></div>
 
 <div id="licensesView" class="hidden">
 <div class="card panel"><div class="panel-head"><div><span class="eyebrow">PROTEÇÃO DOS MODS</span><h2>Central de Licenças</h2></div><button id="refreshLicenses" class="btn ghost">Atualizar</button></div>
