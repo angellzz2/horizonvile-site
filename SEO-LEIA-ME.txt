@@ -1,0 +1,23 @@
+HORIZONVILLE — SEO CONFIGURADO
+
+O que foi ajustado:
+- index.html: title, description, canonical, Open Graph, Twitter Card, Schema.org e robots.
+- store.html: SEO completo e canonical.
+- cart.html: noindex para não aparecer no Google.
+- admin.html: noindex/nofollow para não aparecer no Google.
+- sitemap.xml: início + loja.
+- robots.txt: sitemap informado aos buscadores.
+- _headers: reforço de noindex e cabeçalhos básicos de segurança.
+- Imagens principais receberam texto alternativo quando faltava.
+
+DEPOIS DE PUBLICAR:
+1. Teste https://horizonville.cc/robots.txt
+2. Teste https://horizonville.cc/sitemap.xml
+3. Search Console > Sitemaps > envie sitemap.xml
+4. Inspeção de URL > https://horizonville.cc/ > Solicitar indexação
+5. Inspeção de URL > https://horizonville.cc/store.html > Solicitar indexação
+
+IMPORTANTE:
+- Não coloque admin.html nem cart.html no sitemap.
+- A imagem social atual usa assets/logo-horizonville.png.
+- O frontend aponta para https://horizonville-backend.onrender.com; nenhuma credencial secreta foi adicionada ao pacote.
