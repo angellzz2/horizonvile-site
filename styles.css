@@ -142,3 +142,11 @@ body:before{background-image:linear-gradient(rgba(46,135,255,.035) 1px,transpare
         margin:3px 0;
     }
 }
+
+/* HorizonVille V5 - ID personalizado */
+.id-cart-chip{display:inline-flex;align-items:center;margin-left:8px;padding:4px 8px;border-radius:999px;font-size:9px;font-weight:950;letter-spacing:.5px;color:#c9d7ff;background:rgba(54,103,255,.14);border:1px solid rgba(91,132,255,.32)}
+.special.id-special{color:#b9ccff;background:rgba(54,103,255,.12);border-color:rgba(91,132,255,.3)}
+#desiredIdField[hidden]{display:none!important}
+#desiredIdField small{display:block;margin-top:7px;line-height:1.45}
+#verifyDesiredId:disabled{opacity:.65;cursor:wait}
+#checkout button[type="submit"]:disabled{opacity:.55;cursor:not-allowed;filter:saturate(.6)}

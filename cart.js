@@ -1,35 +1,401 @@
-let couponCode='',couponDiscount=0;
-let idVerification={ok:false,token:null,account:null,desiredId:null,expiresAt:0};
-let idNoticeAccepted=false;
-const isIdProduct=i=>{const t=String(i?.productType||'').toLowerCase();const n=String(i?.name||'').trim().toLowerCase();const b=String(i?.badge||'').trim().toLowerCase();return t==='custom_id'||n==='id'||n==='id personalizado'||n==='id personalizável'||n.includes('id personalizado')||b.includes('id personalizado');};
-const hasIdProduct=()=>HV.cart().some(isIdProduct);
-const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-function resetIdVerification(message=''){idVerification={ok:false,token:null,account:null,desiredId:null,expiresAt:0};const msg=document.querySelector('#idVerifyMsg');if(msg){msg.className=message?'coupon-msg bad':'coupon-msg';msg.textContent=message;}updateCheckoutButton();}
-function updateCheckoutButton(){const btn=document.querySelector('#checkout button[type="submit"]');if(!btn)return;const need=hasIdProduct();const valid=idVerification.ok&&idVerification.expiresAt>Date.now();btn.disabled=need&&(!valid||!idNoticeAccepted);btn.title=btn.disabled?'Feche o aviso e verifique o ID antes de finalizar.':'';}
-function showIdNotice(){if(!hasIdProduct()){idNoticeAccepted=true;updateCheckoutButton();return;}idNoticeAccepted=false;const modal=document.querySelector('#idNoticeModal');if(modal)modal.classList.add('open');updateCheckoutButton();}
-function syncIdField(){let box=document.querySelector('#desiredIdField');if(hasIdProduct()){if(!box){box=document.createElement('div');box.id='desiredIdField';box.className='field';box.innerHTML=`<label>ID que você deseja comprar</label><div class="coupon-box" style="grid-template-columns:1fr auto"><input id="desiredId" type="number" min="1" max="999999" step="1" required placeholder="Ex.: 777"><button id="verifyDesiredId" class="btn ghost" type="button">Verificar ID</button></div><div id="idVerifyMsg" class="coupon-msg"></div><small class="muted">O ID e a conta são consultados diretamente na database do servidor antes de liberar a compra.</small>`;document.querySelector('#account').closest('.field').insertAdjacentElement('afterend',box);document.querySelector('#desiredId').addEventListener('input',()=>resetIdVerification(''));document.querySelector('#account').addEventListener('input',()=>resetIdVerification(''));document.querySelector('#verifyDesiredId').onclick=verifyDesiredId;}}else if(box){box.remove();idVerification={ok:false,token:null,account:null,desiredId:null,expiresAt:0};}updateCheckoutButton();}
-async function verifyDesiredId(){const account=document.querySelector('#account').value.trim();const desiredId=Number(document.querySelector('#desiredId')?.value);const msg=document.querySelector('#idVerifyMsg');const btn=document.querySelector('#verifyDesiredId');resetIdVerification('');if(account.length<2){msg.className='coupon-msg bad';msg.textContent='Informe primeiro a conta do MTA que receberá o ID.';return;}if(!Number.isInteger(desiredId)||desiredId<1||desiredId>999999){msg.className='coupon-msg bad';msg.textContent='Digite um ID válido entre 1 e 999999.';return;}btn.disabled=true;btn.textContent='Verificando...';msg.className='coupon-msg';msg.textContent='Consultando o servidor MTA...';try{const target=HV.api?HV.api('/api/id-checks'):'/api/id-checks';const r=await fetch(target,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({account,desiredId})});const d=await r.json();if(!r.ok)throw new Error(d.message||'Não foi possível iniciar a verificação.');const token=d.token;let result=null;for(let i=0;i<30;i++){await sleep(500);const rr=await fetch(HV.api?HV.api(`/api/id-checks/${encodeURIComponent(token)}`):`/api/id-checks/${encodeURIComponent(token)}`,{cache:'no-store'});const dd=await rr.json();if(!rr.ok)throw new Error(dd.message||'Falha ao consultar a verificação.');if(dd.status==='done'||dd.status==='failed'){result=dd;break;}msg.textContent='Consultando a database do servidor...';}if(!result)throw new Error('O servidor demorou para responder. Tente verificar novamente.');if(result.status==='failed')throw new Error(result.message||'Não foi possível verificar o ID.');if(!result.accountExists)throw new Error('Essa conta não foi encontrada na database do Horizon ID. Confira o login da conta.');if(!result.available)throw new Error(`O ID ${desiredId} não está disponível. Escolha outro ID.`);idVerification={ok:true,token,account,desiredId,expiresAt:Date.now()+120000};msg.className='coupon-msg ok';msg.textContent=`✓ ID ${desiredId} disponível. Conta encontrada${result.oldId!==null&&result.oldId!==undefined?` • ID atual: ${result.oldId}`:''}.`;updateCheckoutButton();}catch(e){resetIdVerification(e.message);}finally{btn.disabled=false;btn.textContent='Verificar ID';}}
-function totals(){const cart=HV.cart(),sub=cart.reduce((a,i)=>a+i.price*i.qty,0),disc=sub*(couponDiscount/100),total=Math.max(0,sub-disc);document.querySelector('#subtotal').textContent=HV.money(sub);document.querySelector('#discount').textContent='- '+HV.money(disc);document.querySelector('#total').textContent=HV.money(total)}
-function render(){const cart=HV.cart(),itemsBox=document.querySelector('#cartItems');itemsBox.innerHTML=cart.length?cart.map(i=>`<article class="card cart-item"><div class="cart-icon">${i.icon||'◆'}</div><div><h3>${i.name}</h3><small>${HV.money(i.price)} cada${isIdProduct(i)?' • 1 por pedido':''}</small><div class="qty">${isIdProduct(i)?'<b>1</b>':`<button data-act="minus" data-id="${i.id}">−</button><b>${i.qty}</b><button data-act="plus" data-id="${i.id}">+</button>`}</div></div><div style="text-align:right"><strong>${HV.money(i.price*i.qty)}</strong><br><button class="remove" data-act="remove" data-id="${i.id}">Remover</button></div></article>`).join(''):`<div class="card empty">Seu carrinho está vazio. <a href="store.html" style="color:#7f9cff">Abrir loja →</a></div>`;document.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{const cart=HV.cart(),x=cart.find(i=>i.id===b.dataset.id);if(!x)return;if(b.dataset.act==='plus'&&!isIdProduct(x))x.qty++;if(b.dataset.act==='minus'&&!isIdProduct(x))x.qty=Math.max(1,x.qty-1);if(b.dataset.act==='remove')cart.splice(cart.indexOf(x),1);HV.save(cart);couponCode='';couponDiscount=0;document.querySelector('#coupon').value='';document.querySelector('#couponMsg').textContent='';resetIdVerification('');render();});syncIdField();totals();}
-document.querySelector('#closeIdNotice').onclick=()=>{document.querySelector('#idNoticeModal').classList.remove('open');idNoticeAccepted=true;updateCheckoutButton();};
-document.querySelector('#applyCoupon').onclick=async()=>{const code=document.querySelector('#coupon').value.trim();const msg=document.querySelector('#couponMsg');if(!code)return;try{const target=HV.api?HV.api('/api/coupons/validate'):'/api/coupons/validate';const r=await fetch(target,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code,items:HV.cart()})});const d=await r.json();if(!r.ok)throw new Error(d.message||'Cupom inválido');couponCode=d.code;couponDiscount=d.discountPercent;msg.className='coupon-msg ok';msg.textContent=`Cupom ${d.code} aplicado: ${d.discountPercent}% de desconto.`;totals()}catch(e){couponCode='';couponDiscount=0;msg.className='coupon-msg bad';msg.textContent=e.message;totals()}};
-document.querySelector('#checkout').onsubmit=async e=>{e.preventDefault();if(!HV.cart().length)return HV.toast('Adicione um produto antes de finalizar.');if(hasIdProduct()){if(!idNoticeAccepted){showIdNotice();return;}const account=document.querySelector('#account').value.trim();const desiredId=Number(document.querySelector('#desiredId')?.value);if(!idVerification.ok||idVerification.expiresAt<=Date.now()||idVerification.account!==account||idVerification.desiredId!==desiredId)return HV.toast('Verifique o ID novamente antes de finalizar a compra.');}const pay=document.querySelector('input[name="pay"]:checked').value;const desired=document.querySelector('#desiredId');const payload={items:HV.cart(),couponCode,account:document.querySelector('#account').value,email:document.querySelector('#email').value,discord:document.querySelector('#discord').value,paymentMethod:pay,desiredId:desired?Number(desired.value):null,verificationToken:hasIdProduct()?idVerification.token:null};const submit=document.querySelector('#checkout button[type="submit"]');submit.disabled=true;try{const target=HV.api?HV.api('/api/checkout'):'/api/checkout';const r=await fetch(target,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const d=await r.json();if(!r.ok)throw new Error(d.message||'Não foi possível criar o pedido.');HV.save([]);document.querySelector('#successText').textContent=`Pedido ${d.order.id} criado. ${d.payment.message}${d.order.desiredId?` ID solicitado: ${d.order.desiredId}. A entrega será automática após a aprovação do pagamento.`:''}`;document.querySelector('#successModal').classList.add('open');}catch(err){HV.toast(err.message);if(hasIdProduct())resetIdVerification('Verifique o ID novamente.');}finally{updateCheckoutButton();}};
-async function hydrateCartProductTypes(){
-  try{
-    const products=await HV.products();
-    const byId=new Map(products.map(p=>[String(p.id),p]));
-    const cart=HV.cart();
-    let changed=false;
-    for(const item of cart){
-      const p=byId.get(String(item.id));
-      if(!p)continue;
-      const nextType=isIdProduct(p)?'custom_id':'normal';
-      if(item.productType!==nextType){item.productType=nextType;changed=true;}
-      if(nextType==='custom_id' && item.qty!==1){item.qty=1;changed=true;}
-    }
-    if(changed)HV.save(cart);
-  }catch(e){console.warn('Não foi possível sincronizar os tipos dos produtos do carrinho:',e);}
-}
+(() => {
+  'use strict';
 
-fetch(HV.api?HV.api('/api/config'):'/api/config').then(r=>r.json()).then(c=>{if(c.paymentMode==='demo')document.querySelector('#paymentNote').textContent='Modo demonstração ativo: o fluxo do checkout funciona sem cobrança real. Para produção, conecte as credenciais do seu provedor de pagamento no backend.'});
-(async()=>{await hydrateCartProductTypes();render();setTimeout(showIdNotice,80);})();
+  const BUILD = '20260816-v5';
+  let couponCode = '';
+  let couponDiscount = 0;
+  let idNoticeAccepted = false;
+  let idVerification = emptyVerification();
+
+  function emptyVerification() {
+    return { ok: false, token: null, account: '', desiredId: null, expiresAt: 0 };
+  }
+
+  function normalize(value) {
+    return String(value ?? '').trim().toLowerCase();
+  }
+
+  function isIdProduct(item) {
+    if (!item) return false;
+    const type = normalize(item.productType || item.type);
+    const name = normalize(item.name);
+    const badge = normalize(item.badge);
+    return type === 'custom_id' ||
+      type === 'id' ||
+      name === 'id' ||
+      name === 'id personalizado' ||
+      name === 'id personalizavel' ||
+      name === 'id personalizável' ||
+      name.includes('id personalizado') ||
+      badge.includes('id personalizado');
+  }
+
+  function cart() {
+    const items = HV.cart();
+    return Array.isArray(items) ? items : [];
+  }
+
+  function hasIdProduct() {
+    return cart().some(isIdProduct);
+  }
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  function idField() { return document.getElementById('desiredIdField'); }
+  function idInput() { return document.getElementById('desiredId'); }
+  function verifyButton() { return document.getElementById('verifyDesiredId'); }
+  function verifyMessage() { return document.getElementById('idVerifyMsg'); }
+  function accountInput() { return document.getElementById('account'); }
+  function checkoutButton() { return document.querySelector('#checkout button[type="submit"]'); }
+
+  function setVerifyMessage(text = '', kind = '') {
+    const el = verifyMessage();
+    if (!el) return;
+    el.className = `coupon-msg${kind ? ` ${kind}` : ''}`;
+    el.textContent = text;
+  }
+
+  function resetIdVerification(message = '') {
+    idVerification = emptyVerification();
+    setVerifyMessage(message, message ? 'bad' : '');
+    updateCheckoutButton();
+  }
+
+  function updateCheckoutButton() {
+    const btn = checkoutButton();
+    if (!btn) return;
+    const needsId = hasIdProduct();
+    const valid = idVerification.ok && idVerification.expiresAt > Date.now();
+    btn.disabled = needsId && (!idNoticeAccepted || !valid);
+    btn.title = btn.disabled ? 'Feche o aviso e verifique o ID antes de finalizar.' : '';
+  }
+
+  function setIdUiVisible(visible) {
+    const field = idField();
+    if (field) {
+      field.hidden = !visible;
+      field.style.display = visible ? 'block' : 'none';
+    }
+    document.body.classList.toggle('has-custom-id-product', visible);
+  }
+
+  function openIdNotice() {
+    if (!hasIdProduct()) {
+      idNoticeAccepted = true;
+      updateCheckoutButton();
+      return;
+    }
+    const modal = document.getElementById('idNoticeModal');
+    if (modal) {
+      idNoticeAccepted = false;
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+    }
+    updateCheckoutButton();
+  }
+
+  function closeIdNotice() {
+    const modal = document.getElementById('idNoticeModal');
+    modal?.classList.remove('open');
+    modal?.setAttribute('aria-hidden', 'true');
+    idNoticeAccepted = true;
+    updateCheckoutButton();
+  }
+
+  function bindIdUi() {
+    const need = hasIdProduct();
+    setIdUiVisible(need);
+
+    if (!need) {
+      idNoticeAccepted = true;
+      idVerification = emptyVerification();
+      updateCheckoutButton();
+      return;
+    }
+
+    const desired = idInput();
+    const account = accountInput();
+    const verify = verifyButton();
+
+    if (desired && !desired.dataset.hvV5Bound) {
+      desired.addEventListener('input', () => resetIdVerification(''));
+      desired.dataset.hvV5Bound = '1';
+    }
+    if (account && !account.dataset.hvV5Bound) {
+      account.addEventListener('input', () => resetIdVerification(''));
+      account.dataset.hvV5Bound = '1';
+    }
+    if (verify) verify.onclick = verifyDesiredId;
+
+    updateCheckoutButton();
+  }
+
+  async function verifyDesiredId() {
+    const account = accountInput()?.value.trim() || '';
+    const desiredId = Number(idInput()?.value);
+    const btn = verifyButton();
+
+    resetIdVerification('');
+
+    if (account.length < 2) {
+      setVerifyMessage('Informe primeiro a conta do MTA que receberá o ID.', 'bad');
+      return;
+    }
+    if (!Number.isInteger(desiredId) || desiredId < 1 || desiredId > 999999) {
+      setVerifyMessage('Digite um ID válido entre 1 e 999999.', 'bad');
+      return;
+    }
+
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Verificando...';
+    }
+    setVerifyMessage('Consultando o servidor MTA...');
+
+    try {
+      const start = await fetch(HV.api('/api/id-checks'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
+        cache: 'no-store',
+        body: JSON.stringify({ account, desiredId })
+      });
+      const started = await start.json().catch(() => ({}));
+      if (!start.ok) throw new Error(started.message || 'Não foi possível iniciar a verificação.');
+      if (!started.token) throw new Error('O backend não retornou o código da verificação.');
+
+      let result = null;
+      for (let attempt = 0; attempt < 40; attempt++) {
+        await sleep(500);
+        const response = await fetch(HV.api(`/api/id-checks/${encodeURIComponent(started.token)}`), {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.message || 'Falha ao consultar a verificação.');
+        if (data.status === 'done' || data.status === 'failed') {
+          result = data;
+          break;
+        }
+        setVerifyMessage('Consultando a database do servidor...');
+      }
+
+      if (!result) throw new Error('O servidor MTA não respondeu à verificação. Confirme se o hv_id_shop está iniciado.');
+      if (result.status === 'failed') throw new Error(result.message || 'Não foi possível verificar o ID.');
+      if (!result.accountExists) throw new Error('Essa conta não foi encontrada na database do Horizon ID. Confira o login da conta.');
+      if (!result.available) throw new Error(`O ID ${desiredId} não está disponível. Escolha outro ID.`);
+
+      idVerification = {
+        ok: true,
+        token: started.token,
+        account,
+        desiredId,
+        expiresAt: Date.now() + 2 * 60 * 1000
+      };
+      const old = result.oldId !== null && result.oldId !== undefined ? ` • ID atual: ${result.oldId}` : '';
+      setVerifyMessage(`✓ ID ${desiredId} disponível. Conta encontrada${old}.`, 'ok');
+      updateCheckoutButton();
+    } catch (error) {
+      idVerification = emptyVerification();
+      setVerifyMessage(error.message || 'Falha ao verificar o ID.', 'bad');
+      updateCheckoutButton();
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Verificar ID';
+      }
+    }
+  }
+
+  function totals() {
+    const subtotal = cart().reduce((sum, item) => sum + Number(item.price || 0) * Number(item.qty || 1), 0);
+    const discount = subtotal * (couponDiscount / 100);
+    const total = Math.max(0, subtotal - discount);
+    document.getElementById('subtotal').textContent = HV.money(subtotal);
+    document.getElementById('discount').textContent = '- ' + HV.money(discount);
+    document.getElementById('total').textContent = HV.money(total);
+  }
+
+  function render() {
+    const items = cart();
+    const box = document.getElementById('cartItems');
+    if (!box) return;
+
+    box.innerHTML = items.length ? items.map(item => {
+      const customId = isIdProduct(item);
+      const qtyControls = customId
+        ? '<div class="qty"><b>1</b><span class="id-cart-chip">ID PERSONALIZADO</span></div>'
+        : `<div class="qty"><button data-act="minus" data-id="${item.id}">−</button><b>${item.qty}</b><button data-act="plus" data-id="${item.id}">+</button></div>`;
+      return `<article class="card cart-item">
+        <div class="cart-icon">${item.icon || '◆'}</div>
+        <div><h3>${item.name}</h3><small>${HV.money(item.price)} cada${customId ? ' • entrega automática' : ''}</small>${qtyControls}</div>
+        <div style="text-align:right"><strong>${HV.money(Number(item.price || 0) * Number(item.qty || 1))}</strong><br><button class="remove" data-act="remove" data-id="${item.id}">Remover</button></div>
+      </article>`;
+    }).join('') : '<div class="card empty">Seu carrinho está vazio. <a href="store.html" style="color:#7f9cff">Abrir loja →</a></div>';
+
+    document.querySelectorAll('[data-act]').forEach(button => {
+      button.onclick = () => {
+        const itemsNow = cart();
+        const item = itemsNow.find(x => String(x.id) === String(button.dataset.id));
+        if (!item) return;
+        if (button.dataset.act === 'plus' && !isIdProduct(item)) item.qty = Number(item.qty || 1) + 1;
+        if (button.dataset.act === 'minus' && !isIdProduct(item)) item.qty = Math.max(1, Number(item.qty || 1) - 1);
+        if (button.dataset.act === 'remove') itemsNow.splice(itemsNow.indexOf(item), 1);
+        HV.save(itemsNow);
+        couponCode = '';
+        couponDiscount = 0;
+        document.getElementById('coupon').value = '';
+        document.getElementById('couponMsg').textContent = '';
+        resetIdVerification('');
+        render();
+      };
+    });
+
+    bindIdUi();
+    totals();
+  }
+
+  async function hydrateCartFromBackend() {
+    try {
+      const products = await HV.products({ cacheBust: true });
+      const byId = new Map(products.map(p => [String(p.id), p]));
+      const items = cart();
+      let changed = false;
+
+      for (const item of items) {
+        const product = byId.get(String(item.id));
+        const custom = product ? isIdProduct(product) : isIdProduct(item);
+        const nextType = custom ? 'custom_id' : 'normal';
+        if (item.productType !== nextType) { item.productType = nextType; changed = true; }
+        if (product) {
+          if (item.name !== product.name) { item.name = product.name; changed = true; }
+          if (Number(item.price) !== Number(product.price)) { item.price = Number(product.price); changed = true; }
+          if ((item.icon || '') !== (product.icon || '')) { item.icon = product.icon || '◆'; changed = true; }
+        }
+        if (custom && Number(item.qty) !== 1) { item.qty = 1; changed = true; }
+      }
+      if (changed) HV.save(items);
+    } catch (error) {
+      console.warn('[HorizonVille V5] Não foi possível sincronizar produtos; usando os dados do carrinho.', error);
+    }
+  }
+
+  async function applyCoupon() {
+    const code = document.getElementById('coupon').value.trim();
+    const msg = document.getElementById('couponMsg');
+    if (!code) return;
+    try {
+      const response = await fetch(HV.api('/api/coupons/validate'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+        body: JSON.stringify({ code, items: cart() })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || 'Cupom inválido');
+      couponCode = data.code;
+      couponDiscount = Number(data.discountPercent || 0);
+      msg.className = 'coupon-msg ok';
+      msg.textContent = `Cupom ${data.code} aplicado: ${couponDiscount}% de desconto.`;
+    } catch (error) {
+      couponCode = '';
+      couponDiscount = 0;
+      msg.className = 'coupon-msg bad';
+      msg.textContent = error.message;
+    }
+    totals();
+  }
+
+  async function checkout(event) {
+    event.preventDefault();
+    const items = cart();
+    if (!items.length) return HV.toast('Adicione um produto antes de finalizar.');
+
+    const customId = hasIdProduct();
+    const account = accountInput()?.value.trim() || '';
+    const desiredId = Number(idInput()?.value);
+
+    if (customId) {
+      if (!idNoticeAccepted) {
+        openIdNotice();
+        return;
+      }
+      if (!idVerification.ok || idVerification.expiresAt <= Date.now() || idVerification.account !== account || idVerification.desiredId !== desiredId) {
+        return HV.toast('Verifique o ID antes de finalizar a compra.');
+      }
+    }
+
+    const pay = document.querySelector('input[name="pay"]:checked')?.value;
+    const submit = checkoutButton();
+    if (submit) {
+      submit.disabled = true;
+      submit.textContent = 'Criando pedido...';
+    }
+
+    try {
+      const response = await fetch(HV.api('/api/checkout'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        cache: 'no-store',
+        body: JSON.stringify({
+          items,
+          couponCode,
+          account,
+          email: document.getElementById('email').value,
+          discord: document.getElementById('discord').value,
+          paymentMethod: pay,
+          desiredId: customId ? desiredId : null,
+          verificationToken: customId ? idVerification.token : null
+        })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || 'Não foi possível criar o pedido.');
+
+      HV.save([]);
+      const suffix = data.order?.desiredId ? ` ID solicitado: ${data.order.desiredId}. A entrega será automática após a aprovação do pagamento.` : '';
+      document.getElementById('successText').textContent = `Pedido ${data.order.id} criado. ${data.payment.message}${suffix}`;
+      document.getElementById('successModal').classList.add('open');
+    } catch (error) {
+      HV.toast(error.message || 'Falha ao finalizar a compra.');
+      if (customId) resetIdVerification('Verifique o ID novamente.');
+    } finally {
+      if (submit) submit.textContent = 'Finalizar compra';
+      updateCheckoutButton();
+    }
+  }
+
+  async function loadPaymentMode() {
+    try {
+      const response = await fetch(HV.api('/api/config'), { cache: 'no-store' });
+      const data = await response.json();
+      if (data.paymentMode === 'demo') {
+        document.getElementById('paymentNote').textContent = 'Modo demonstração ativo: o checkout funciona sem cobrança real. Não use em produção.';
+      }
+    } catch (_) {}
+  }
+
+  async function init() {
+    document.documentElement.dataset.hvCartBuild = BUILD;
+    document.getElementById('closeIdNotice')?.addEventListener('click', closeIdNotice);
+    document.getElementById('applyCoupon')?.addEventListener('click', applyCoupon);
+    document.getElementById('checkout')?.addEventListener('submit', checkout);
+
+    await hydrateCartFromBackend();
+    render();
+    await loadPaymentMode();
+
+    if (hasIdProduct()) {
+      // O pré-carregador inline já pode ter aberto o modal; garantimos novamente aqui.
+      setTimeout(openIdNotice, 120);
+    } else {
+      idNoticeAccepted = true;
+      updateCheckoutButton();
+    }
+
+    console.info(`[HorizonVille] Checkout de ID ${BUILD} carregado.`, { hasIdProduct: hasIdProduct(), cart: cart() });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
+  else init();
+})();
