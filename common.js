@@ -17,7 +17,7 @@ const HV={
   },
   cart(){try{return JSON.parse(localStorage.getItem('hv_cart')||'[]')}catch{return[]}},
   save(cart){localStorage.setItem('hv_cart',JSON.stringify(cart));this.updateCount()},
-  add(product,qty=1){const cart=this.cart();const found=cart.find(x=>x.id===product.id);if(found)found.qty+=qty;else cart.push({id:product.id,name:product.name,price:product.price,icon:product.icon,qty});this.save(cart);this.toast(`${product.name} foi adicionado ao carrinho.`)},
+  add(product,qty=1){const cart=this.cart();const found=cart.find(x=>x.id===product.id);if(found)found.qty=found.productType==='custom_id'?1:found.qty+qty;else cart.push({id:product.id,name:product.name,price:product.price,icon:product.icon,productType:product.productType||'normal',qty:product.productType==='custom_id'?1:qty});this.save(cart);this.toast(`${product.name} foi adicionado ao carrinho.`)},
   money(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})},
   updateCount(){const n=this.cart().reduce((a,b)=>a+b.qty,0);document.querySelectorAll('.cart-count').forEach(el=>el.textContent=n)},
   toast(msg){let t=document.querySelector('.toast');if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t)}t.textContent=msg;t.classList.add('show');clearTimeout(window.__hvt);window.__hvt=setTimeout(()=>t.classList.remove('show'),2300)},
