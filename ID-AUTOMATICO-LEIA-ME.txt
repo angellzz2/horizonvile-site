@@ -1,0 +1,9 @@
+HORIZONVILLE • ID AUTOMÁTICO
+
+No Render deste backend configure:
+MTA_API_KEY=mesma chave configurada no hv_id_shop
+HV_STORE_BOT_API_KEY=uma chave forte compartilhada somente com o bot
+
+Fluxo: checkout -> Verificar ID -> MTA consulta database.db -> pagamento aprovado -> hv_id_shop atualiza register.id -> confirma -> bot recebe log.
+
+IMPORTANTE: PAYMENT_MODE=demo aprova compras sem cobrança real. Para produção, use somente depois de conectar seu gateway de pagamento real.

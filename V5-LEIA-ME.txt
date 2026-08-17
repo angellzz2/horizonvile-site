@@ -1,0 +1,12 @@
+HORIZONVILLE BACKEND V5
+
+Render Environment obrigatório:
+MTA_API_KEY=<mesma chave usada em hv_id_shop/config.lua>
+HV_STORE_BOT_API_KEY=<mesma chave usada no .env do bot>
+ADMIN_PASSWORD=<senha do painel admin>
+ADMIN_TOKEN_SECRET=<segredo forte e privado>
+PAYMENT_MODE=demo (somente testes) ou configuração de pagamento real quando integrar o provedor.
+
+Rotas de diagnóstico:
+GET /api/health -> build v5
+GET /api/id-system/status -> informa se o MTA/hv_id_shop já autenticou no backend desde o último restart.

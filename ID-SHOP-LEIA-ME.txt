@@ -1,0 +1,11 @@
+HORIZONVILLE - VENDA DE ID
+
+1. No painel Admin > Produtos, crie/edite um produto e selecione Tipo de produto = ID personalizado.
+2. Defina o preço normalmente.
+3. O checkout pedirá o ID desejado e o backend reservará esse ID no pedido.
+4. Instale o resource hv_id_shop no servidor MTA e configure API_URL + MTA_API_KEY iguais ao Render.
+5. O resource horizon_id original deve continuar com o comando /setarid e exports getAccByID/getIDbyAcc.
+6. Como o core do horizon_id é MTAX protegido, o bridge usa o comando /setarid por um administrador online autorizado. Se não houver Admin online, o pedido fica pendente e tenta novamente.
+7. Antes de aplicar, o bridge consulta os exports do horizon_id e confirma a alteração depois do comando.
+
+IMPORTANTE: em PAYMENT_MODE=demo o backend considera a compra aprovada sem cobrança real. Não use demo para vendas reais.

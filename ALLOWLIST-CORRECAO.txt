@@ -1,0 +1,4 @@
+HorizonVille V7 - Correção Allowlist
+- Allowlist passa a iniciar ativada.
+- Migração única ativa instalações que estavam presas em enabled=false.
+- Depois da migração, o Painel do Bot continua podendo ligar/desligar normalmente.

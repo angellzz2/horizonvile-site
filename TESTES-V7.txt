@@ -1,7 +1,21 @@
-HORIZONVILLE SITE V7 — VERIFICAÇÕES REALIZADAS
+HORIZONVILLE BACKEND V7 — SMOKE TESTS REALIZADOS
 
-- JavaScript validado com node --check.
-- IDs principais usados por Admin, Bot Panel e Carrinho conferidos contra o HTML.
-- Rotas /hv-admin, /hv-bot-panel, /profile.html, /cart.html e /store.html testadas no backend local.
-- Checkout configurado para exigir sessão Discord e enviar Authorization ao backend.
-- Painéis privados removidos do sitemap e marcados como noindex.
+Testado localmente em cópia isolada da base:
+- health e páginas estáticas;
+- checkout bloqueado sem login Discord;
+- Super Admin com acesso Admin + Bot;
+- senha adicional dos dois painéis;
+- cadastro de acesso por Discord ID;
+- geração de código de Allowlist;
+- reprovação 7/10 sem liberação;
+- aprovação 10/10 com liberação;
+- código usado não reutilizável;
+- vínculo Discord -> login do jogo -> ID;
+- checkout autenticado e identidade Discord real no pedido;
+- produto limitado reduzindo estoque corretamente;
+- dashboard contando apenas vendas aprovadas;
+- fila/ack de logs de compras do bot;
+- heartbeat do MTA e jogadores/max players.
+
+A autenticação OAuth real depende das credenciais DISCORD_CLIENT_ID / DISCORD_CLIENT_SECRET do deploy.
+O pagamento real Asaas permanece fora desta versão; PAYMENT_MODE=demo até a integração.

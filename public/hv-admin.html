@@ -1,0 +1,70 @@
+<!doctype html><html lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#050815">
+<title>Painel Administrativo | HorizonVille</title>
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="icon" type="image/png" sizes="128x128" href="/favicon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+</head><body><div class="tech-bg"><span class="beam b1"></span><span class="beam b3"></span><span class="particle p1"></span><span class="particle p4"></span></div><div class="ambient"><i class="orb a"></i><i class="orb b"></i><i class="orb c"></i></div>
+<section id="login" class="card login-card"><img src="assets/logo-horizonville.png" alt="HorizonVille Roleplay"><h1>Painel Administrativo</h1><p>Acesso privado: Discord autorizado + senha adicional.</p><div id="adminDiscordState" class="admin-note">Verificando sua conta do Discord...</div><button id="adminDiscordLogin" class="btn ghost hidden" style="width:100%;margin-bottom:10px">Conectar com Discord</button><div class="field"><label>Senha administrativa</label><input id="password" type="password" placeholder="••••••••" autocomplete="current-password"></div><button id="loginBtn" class="btn primary" style="width:100%;margin-top:12px">Entrar</button><p id="loginMsg" class="coupon-msg bad"></p></section>
+<div id="adminApp" class="hidden"><header class="topbar"><div class="shell"><a class="brand" href="index.html"><img src="assets/logo-horizonville.png" alt="HorizonVille Roleplay"><b>Horizon<span>Ville</span> <em>Admin</em></b></a><div class="actions"><a class="btn ghost" href="store.html">Ver loja</a><button id="logout" class="btn ghost">Sair</button></div></div></header>
+<main class="shell admin-wrap">
+<aside class="card admin-side"><button class="btn ghost active-side" data-view="dashboard">Visão geral</button><button class="btn ghost" data-view="products">Produtos</button><button class="btn ghost" data-view="coupons">Cupons</button><button class="btn ghost" data-view="orders">Pedidos</button><button class="btn ghost" data-view="licenses">Licenças</button><button class="btn ghost" data-view="access">Acessos</button></aside>
+<section class="admin-main">
+<div id="dashboardView"><span class="eyebrow">PAINEL ADMINISTRATIVO</span><h1 class="admin-title">Controle da loja</h1>
+<div class="admin-grid metrics-grid">
+  <div class="card admin-stat metric-primary"><small>Faturamento aprovado</small><strong id="stRevenue">R$ 0,00</strong><span>Total recebido em pedidos aprovados</span></div>
+  <div class="card admin-stat metric-profit"><small>Lucro estimado</small><strong id="stProfit">R$ 0,00</strong><span>Faturamento menos custo cadastrado</span></div>
+  <div class="card admin-stat"><small>Vendas</small><strong id="stSales">0</strong><span>pedidos aprovados</span></div>
+  <div class="card admin-stat"><small>Produtos</small><strong id="stProducts">0</strong><span>itens cadastrados</span></div>
+  <div class="card admin-stat"><small>Cupons</small><strong id="stCoupons">0</strong><span>cupons cadastrados</span></div>
+  <div class="card admin-stat"><small>Pedidos</small><strong id="stOrders">0</strong><span>todos os pedidos</span></div>
+  <div class="card admin-stat"><small>Ativos</small><strong id="stActive">0</strong><span>produtos visíveis</span></div>
+  <div class="card admin-stat"><small>Vendas hoje</small><strong id="stSalesToday">0</strong><span>pedidos aprovados hoje</span></div>
+  <div class="card admin-stat"><small>Faturamento hoje</small><strong id="stRevenueToday">R$ 0,00</strong><span>aprovado hoje</span></div>
+  <div class="card admin-stat"><small>Ticket médio</small><strong id="stAvgTicket">R$ 0,00</strong><span>por venda aprovada</span></div>
+</div><p class="admin-note">O “lucro estimado” usa o custo unitário que você preencher em cada produto. Se deixar o custo em R$ 0,00, o sistema considera todo o valor vendido como lucro bruto.</p></div>
+
+<div id="productsView" class="hidden">
+<div class="card panel"><div class="panel-head"><div><span class="eyebrow">CATÁLOGO</span><h2 id="productFormTitle">Adicionar item à loja</h2></div><button id="cancelProductEdit" class="btn ghost hidden">Cancelar edição</button></div>
+<div class="form-grid product-form-grid">
+<div class="field"><label>Nome</label><input id="pName" placeholder="Ex.: VIP Platina"></div>
+<div class="field"><label>Preço de venda (R$)</label><input id="pPrice" type="number" min="0" step="0.01" placeholder="49.90"></div>
+<div class="field"><label>Custo unitário (R$)</label><input id="pCostPrice" type="number" min="0" step="0.01" placeholder="0.00"></div>
+<div class="field"><label>Categoria</label><select id="pCategory"><option>VIPs</option><option>Carros</option><option>Gemas</option><option>Outros</option></select></div>
+<div class="field"><label>Tipo de produto</label><select id="pProductType"><option value="normal">Produto normal</option><option value="custom_id">ID personalizado</option></select><small class="muted">Em ID personalizado, o checkout pede o novo ID do jogador.</small></div>
+<div class="field"><label>Selo / badge</label><input id="pBadge" placeholder="Ex.: 30 dias"></div>
+<div class="field"><label>Ícone</label><input id="pIcon" placeholder="Ex.: ◆, ★, 💎, 🚗"></div>
+<div class="field"><label>Status</label><select id="pActive"><option value="true">Ativo</option><option value="false">Pausado</option></select></div>
+<div class="field"><label>Produto exclusivo?</label><select id="pExclusive"><option value="false">Não</option><option value="true">Sim</option></select></div>
+<div class="field"><label>Produto limitado?</label><select id="pLimited"><option value="false">Não</option><option value="true">Sim</option></select></div>
+<div class="field" id="pStockField" style="display:none"><label>Quantidade disponível</label><input id="pStock" type="number" min="0" step="1" placeholder="Ex.: 20"><small class="muted">Obrigatório somente para produtos exclusivos.</small></div>
+<div class="field span-2"><label>Bônus ao comprar</label><input id="pBonus" placeholder="Ex.: +300 gemas, item extra, 10 dias adicionais"></div>
+<div class="field span-2"><label>Descrição</label><input id="pDescription" placeholder="Descrição curta do produto"></div>
+<div class="field span-2"><label>Imagem do produto</label><input id="pImageFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif"><div class="image-upload-row"><input id="pImage" type="text" readonly placeholder="Nenhuma imagem enviada"><button id="uploadProductImage" type="button" class="btn ghost">Enviar imagem</button><button id="clearProductImage" type="button" class="btn ghost">Remover</button></div><div id="imagePreview" class="image-preview"><span>Prévia da imagem</span></div><small class="muted">PNG, JPG, WEBP ou GIF. Máximo recomendado: 5 MB.</small></div>
+</div>
+<button id="saveProduct" class="btn orange" style="margin-top:14px">Adicionar produto</button></div>
+
+<div class="card panel"><h2>Produtos cadastrados</h2><div class="table-wrap"><table class="table"><thead><tr><th>Item</th><th>Categoria</th><th>Preço</th><th>Exclusivo</th><th>Limitado</th><th>Estoque</th><th>Status</th><th>Ações</th></tr></thead><tbody id="productRows"></tbody></table></div></div></div>
+
+<div id="couponsView" class="hidden"><div class="card panel"><h2>Criar cupom</h2><div class="form-grid"><div class="field"><label>Código</label><input id="cCode" placeholder="HORIZON20"></div><div class="field"><label>Desconto (%)</label><input id="cDiscount" type="number" min="1" max="100" value="10"></div><div class="field"><label>Máximo de usos</label><input id="cMax" type="number" min="0" value="0"><small class="muted">0 = ilimitado</small></div><div class="field"><label>Validade</label><input id="cExp" type="date"></div></div><button id="createCoupon" class="btn orange" style="margin-top:14px">Criar cupom</button></div><div class="card panel"><h2>Cupons</h2><div class="table-wrap"><table class="table"><thead><tr><th>Código</th><th>Desconto</th><th>Usos</th><th>Validade</th><th>Status</th><th>Ações</th></tr></thead><tbody id="couponRows"></tbody></table></div></div></div>
+
+<div id="ordersView" class="hidden"><div class="card panel"><h2>Pedidos e vendas</h2><div class="table-wrap"><table class="table"><thead><tr><th>Pedido</th><th>Discord</th><th>Conta / ID</th><th>Itens</th><th>Total</th><th>Lucro est.</th><th>Pagamento</th><th>Entrega</th><th>ID desejado</th><th>Data</th></tr></thead><tbody id="orderRows"></tbody></table></div></div></div>
+
+<div id="licensesView" class="hidden">
+<div class="card panel"><div class="panel-head"><div><span class="eyebrow">PROTEÇÃO DOS MODS</span><h2>Central de Licenças</h2></div><button id="refreshLicenses" class="btn ghost">Atualizar</button></div>
+<p class="admin-note">Cada licença usa como ID o nome exato da pasta do resource no MTA. Ativar/revogar aqui altera a mesma licença usada pelo bot do Discord.</p>
+<div class="form-grid"><div class="field"><label>Resource / pasta</label><input id="lResource" placeholder="Ex.: horizon_hud"></div><div class="field"><label>Nome do mod</label><input id="lName" placeholder="Ex.: Horizonville HUD"></div><div class="field"><label>IP autorizado</label><input id="lIp" placeholder="Ex.: 200.9.154.250"></div><div class="field"><label>Porta</label><input id="lPort" type="number" placeholder="22321"></div><div class="field"><label>Instance ID</label><input id="lInstance" placeholder="horizonville-production-01"></div><div class="field"><label>Servidor</label><input id="lServer" value="Horizonville Roleplay"></div></div>
+<button id="createLicense" class="btn orange" style="margin-top:14px">Criar licença</button><div id="newLicenseKey" class="license-key-box hidden"></div></div>
+<div class="card panel"><h2>Mods cadastrados</h2><div class="table-wrap"><table class="table"><thead><tr><th>Mod</th><th>Resource</th><th>Status</th><th>Servidor</th><th>Vínculo</th><th>Última validação</th><th>Ações</th></tr></thead><tbody id="licenseRows"><tr><td colspan="7">Carregando...</td></tr></tbody></table></div></div>
+</div>
+
+<div id="accessView" class="hidden">
+<div class="card panel"><div class="panel-head"><div><span class="eyebrow">SEGURANÇA</span><h2>Acessos aos painéis</h2></div><button id="refreshAccess" class="btn ghost">Atualizar</button></div><p class="admin-note">Adicione o ID do perfil do Discord. O proprietário principal permanece com acesso total e não pode ser removido.</p><div class="form-grid"><div class="field"><label>Discord ID</label><input id="aDiscordId" placeholder="123456789012345678"></div><div class="field"><label>Nome / identificação</label><input id="aLabel" placeholder="Ex.: João - Gerente"></div><div class="field"><label>Painel Administrativo</label><select id="aAdmin"><option value="true">Permitido</option><option value="false">Bloqueado</option></select></div><div class="field"><label>Painel do Bot</label><select id="aBot"><option value="true">Permitido</option><option value="false">Bloqueado</option></select></div></div><button id="saveAccess" class="btn orange" style="margin-top:14px">Salvar acesso</button></div>
+<div class="card panel"><h2>Usuários autorizados</h2><div class="table-wrap"><table class="table"><thead><tr><th>Discord ID</th><th>Nome</th><th>Admin</th><th>Bot</th><th>Nível</th><th>Status</th><th>Ação</th></tr></thead><tbody id="accessRows"><tr><td colspan="7">Carregando...</td></tr></tbody></table></div></div>
+<div class="card panel"><h2>Auditoria recente</h2><div class="table-wrap"><table class="table"><thead><tr><th>Data</th><th>Usuário</th><th>Ação</th><th>Detalhe</th></tr></thead><tbody id="auditRows"><tr><td colspan="4">Carregando...</td></tr></tbody></table></div></div>
+</div>
+</section></main></div><div class="toast"></div><script src="config.js?v=20260817-v7"></script><script src="common.js?v=20260817-v7"></script><script src="admin.js?v=20260817-v7"></script></body></html>

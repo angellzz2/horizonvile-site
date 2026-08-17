@@ -1,0 +1,22 @@
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+  X-Frame-Options: SAMEORIGIN
+
+/hv-admin.html
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+/hv-admin
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+/hv-bot-panel.html
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+/hv-bot-panel
+  X-Robots-Tag: noindex, nofollow, noarchive, nosnippet
+/profile.html
+  X-Robots-Tag: noindex, nofollow, noarchive
+/orders.html
+  X-Robots-Tag: noindex, nofollow, noarchive
+/auth.html
+  X-Robots-Tag: noindex, nofollow, noarchive
+/cart.html
+  X-Robots-Tag: noindex, nofollow, noarchive
