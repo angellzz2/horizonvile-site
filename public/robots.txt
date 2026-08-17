@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://horizonville.cc/sitemap.xml

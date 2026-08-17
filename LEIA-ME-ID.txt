@@ -1,8 +1,0 @@
-CORREÇÃO ID PERSONALIZADO V2
-
-1) Faça deploy DE TODOS os arquivos desta pasta no Cloudflare Pages, não apenas HTML.
-2) Atualize também o backend no Render com o pacote V2.
-3) No Admin, edite o produto e selecione Tipo de produto = ID personalizado, depois Salvar.
-4) Na tabela do Admin deve aparecer TIPO: ID PERSONALIZADO abaixo do nome.
-5) Na loja/carrinho, o produto passa a ser reconhecido mesmo se for legado com nome "ID Personalizado".
-6) Remova itens antigos do carrinho, Ctrl+F5, adicione novamente e abra o carrinho.

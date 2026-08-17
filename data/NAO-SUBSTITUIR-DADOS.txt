@@ -1,3 +1,0 @@
-NÃO coloque um store.json antigo por cima do seu atual.
-O backend V5 cria um store.json vazio apenas se ele não existir.
-Em atualização, preserve o data/store.json que já está em produção.
