@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const BUILD = '20260816-v5.2-final';
+  const BUILD = '20260816-v5.3-final';
   let couponCode = '';
   let couponDiscount = 0;
   let idNoticeAccepted = false;
@@ -9,6 +9,21 @@
 
   function emptyVerification() {
     return { ok: false, token: null, account: '', desiredId: null, expiresAt: 0 };
+  }
+
+  function saveVerification() {
+    try { sessionStorage.setItem('hv_id_verification', JSON.stringify(idVerification)); } catch (_) {}
+  }
+
+  function restoreVerification() {
+    try {
+      const raw = JSON.parse(sessionStorage.getItem('hv_id_verification') || 'null');
+      if (raw && raw.ok && raw.token && Number(raw.expiresAt) > Date.now()) {
+        idVerification = raw;
+      } else {
+        sessionStorage.removeItem('hv_id_verification');
+      }
+    } catch (_) {}
   }
 
   function normalize(value) {
@@ -64,6 +79,7 @@
 
   function resetIdVerification(message = '') {
     idVerification = emptyVerification();
+    try { sessionStorage.removeItem('hv_id_verification'); } catch (_) {}
     setVerifyMessage(message, message ? 'bad' : '');
     updateCheckoutButton();
   }
@@ -194,8 +210,9 @@
         token: started.token,
         account,
         desiredId,
-        expiresAt: Date.now() + 2 * 60 * 1000
+        expiresAt: Date.now() + 5 * 60 * 1000
       };
+      saveVerification();
       const old = result.oldId !== null && result.oldId !== undefined ? ` • ID atual: ${result.oldId}` : '';
       setVerifyMessage(`✓ ID ${desiredId} disponível. Conta encontrada${old}.`, 'ok');
       updateCheckoutButton();
@@ -344,7 +361,8 @@
           discord: document.getElementById('discord').value,
           paymentMethod: pay,
           desiredId: customId ? desiredId : null,
-          verificationToken: customId ? idVerification.token : null
+          verificationToken: customId ? idVerification.token : null,
+          checkoutRequestId: requestId('checkout')
         },
         timeoutMs: 20000
       });
@@ -354,8 +372,13 @@
       document.getElementById('successText').textContent = `Pedido ${data.order.id} criado. ${data.payment.message}${suffix}`;
       document.getElementById('successModal').classList.add('open');
     } catch (error) {
-      HV.toast(error.message || 'Falha ao finalizar a compra.');
-      if (customId) resetIdVerification('Verifique o ID novamente.');
+      const message = error.message || 'Falha ao finalizar a compra.';
+      HV.toast(message);
+      if (customId) {
+        // Só invalida a verificação quando o backend disser que ela realmente deixou de ser válida.
+        if (/verifica|expir|conta ou o id mudou|reservado/i.test(message)) resetIdVerification(message);
+        else setVerifyMessage(`O ID continua verificado. Erro ao criar pedido: ${message}`, 'bad');
+      }
     } finally {
       if (submit) submit.textContent = 'Finalizar compra';
       updateCheckoutButton();
@@ -373,6 +396,7 @@
 
   async function init() {
     document.documentElement.dataset.hvCartBuild = BUILD;
+    restoreVerification();
     document.getElementById('closeIdNotice')?.addEventListener('click', closeIdNotice);
     document.getElementById('applyCoupon')?.addEventListener('click', applyCoupon);
     document.getElementById('checkout')?.addEventListener('submit', checkout);
@@ -384,7 +408,7 @@
     if (hasIdProduct()) {
       try {
         const network = await HV.request(`/api/network-test?v=${Date.now()}`, { timeoutMs: 10000 });
-        if (network.build !== 'v5.2-final') {
+        if (network.build !== 'v5.3-final') {
           setVerifyMessage('O backend ainda não está na versão final. Faça o deploy do backend V5.2.', 'bad');
         }
       } catch (e) {
