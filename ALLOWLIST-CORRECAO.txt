@@ -1,0 +1,3 @@
+HorizonVille V7 - Correção Painel
+- Removidos redirects de /hv-admin e /hv-bot-panel que podiam gerar ERR_TOO_MANY_REDIRECTS no Cloudflare Pages.
+- Use /hv-admin.html e /hv-bot-panel.html.
