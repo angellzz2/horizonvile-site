@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const BUILD = '20260816-v5.3-final';
+  const BUILD = '20260816-v5.4-final';
   let couponCode = '';
   let couponDiscount = 0;
   let idNoticeAccepted = false;
@@ -408,7 +408,7 @@
     if (hasIdProduct()) {
       try {
         const network = await HV.request(`/api/network-test?v=${Date.now()}`, { timeoutMs: 10000 });
-        if (network.build !== 'v5.3-final') {
+        if (network.build !== 'v5.4-final') {
           setVerifyMessage('O backend ainda não está na versão final. Faça o deploy do backend V5.2.', 'bad');
         }
       } catch (e) {
