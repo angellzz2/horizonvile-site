@@ -5,6 +5,7 @@
   let couponCode = '';
   let couponDiscount = 0;
   let idNoticeAccepted = false;
+  let discordAuthenticated = false;
   let idVerification = emptyVerification();
 
   function emptyVerification() {
@@ -89,8 +90,9 @@
     if (!btn) return;
     const needsId = hasIdProduct();
     const valid = idVerification.ok && idVerification.expiresAt > Date.now();
-    btn.disabled = needsId && (!idNoticeAccepted || !valid);
-    btn.title = btn.disabled ? 'Feche o aviso e verifique o ID antes de finalizar.' : '';
+    const idBlocked = needsId && (!idNoticeAccepted || !valid);
+    btn.disabled = !discordAuthenticated || idBlocked;
+    btn.title = !discordAuthenticated ? 'Conecte seu Discord para realizar compras.' : (idBlocked ? 'Feche o aviso e verifique o ID antes de finalizar.' : '');
   }
 
   function setIdUiVisible(visible) {
@@ -179,7 +181,8 @@
       const started = await HV.request('/api/id-checks', {
         method: 'POST',
         json: { account, desiredId, clientRequestId: requestId('idcheck') },
-        timeoutMs: 20000
+        timeoutMs: 20000,
+        auth: true
       });
       if (!started.token) throw new Error('O backend não retornou o código da verificação.');
 
@@ -326,9 +329,10 @@
 
   async function checkout(event) {
     event.preventDefault();
+    const me = await HV.me(true);
+    if (!me) { HV.toast('Conecte seu Discord para realizar compras.'); setTimeout(() => HV.login('/cart.html'), 600); return; }
     const items = cart();
     if (!items.length) return HV.toast('Adicione um produto antes de finalizar.');
-
     const customId = hasIdProduct();
     const account = accountInput()?.value.trim() || '';
     const desiredId = Number(idInput()?.value);
@@ -358,13 +362,13 @@
           couponCode,
           account,
           email: document.getElementById('email').value,
-          discord: document.getElementById('discord').value,
           paymentMethod: pay,
           desiredId: customId ? desiredId : null,
           verificationToken: customId ? idVerification.token : null,
           checkoutRequestId: requestId('checkout')
         },
-        timeoutMs: 20000
+        timeoutMs: 20000,
+        auth: true
       });
 
       HV.save([]);
@@ -385,6 +389,29 @@
     }
   }
 
+
+  async function loadDiscordIdentity() {
+    const me = await HV.me(true);
+    const discord = document.getElementById('checkoutDiscord');
+    const account = accountInput();
+    const email = document.getElementById('email');
+    const submit = checkoutButton();
+    discordAuthenticated = !!me;
+    if (!me) {
+      if (discord) discord.textContent = '❌ Conecte seu Discord para comprar';
+      if (submit) { submit.disabled = true; submit.title = 'Conecte seu Discord para realizar compras.'; }
+      const note = document.getElementById('paymentNote');
+      if (note) note.innerHTML = '🔐 <b>Login com Discord obrigatório.</b> <button type="button" id="checkoutDiscordLogin" class="btn ghost" style="margin-left:8px">Conectar Discord</button>';
+      setTimeout(()=>document.getElementById('checkoutDiscordLogin')?.addEventListener('click',()=>HV.login('/cart.html')),0);
+      updateCheckoutButton();
+      return;
+    }
+    if (discord) discord.textContent = `✅ ${me.user.displayName || me.user.username} (@${me.user.username}) • ${me.user.discordId}`;
+    if (email && !email.value && me.user.email) email.value = me.user.email;
+    if (account && me.game?.login) { account.value = me.game.login; account.readOnly = true; account.title = 'Conta vinculada ao seu Discord pela Allowlist.'; }
+    updateCheckoutButton();
+  }
+
   async function loadPaymentMode() {
     try {
       const data = await HV.request(`/api/config?v=${Date.now()}`, { timeoutMs: 10000 });
@@ -399,10 +426,12 @@
     restoreVerification();
     document.getElementById('closeIdNotice')?.addEventListener('click', closeIdNotice);
     document.getElementById('applyCoupon')?.addEventListener('click', applyCoupon);
+    HV.me(true).then(me=>{const box=document.getElementById('checkoutDiscord');if(box)box.textContent=me?`✅ ${me.user.displayName||me.user.username} (@${me.user.username})`:'❌ Login Discord obrigatório para finalizar.';if(me?.game?.login){const a=accountInput();if(a){a.value=me.game.login;a.readOnly=true;a.title='Conta vinculada ao seu Discord pela Allowlist';}}}).catch(()=>{});
     document.getElementById('checkout')?.addEventListener('submit', checkout);
 
     await hydrateCartFromBackend();
     render();
+    await loadDiscordIdentity();
     await loadPaymentMode();
 
     if (hasIdProduct()) {

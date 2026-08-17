@@ -1,0 +1,7 @@
+HORIZONVILLE SITE V7 — VERIFICAÇÕES REALIZADAS
+
+- JavaScript validado com node --check.
+- IDs principais usados por Admin, Bot Panel e Carrinho conferidos contra o HTML.
+- Rotas /hv-admin, /hv-bot-panel, /profile.html, /cart.html e /store.html testadas no backend local.
+- Checkout configurado para exigir sessão Discord e enviar Authorization ao backend.
+- Painéis privados removidos do sitemap e marcados como noindex.

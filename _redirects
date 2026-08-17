@@ -1,1 +1,6 @@
-# Sem redirects customizados. O Cloudflare Pages resolve automaticamente admin.html -> /admin, store.html -> /store e cart.html -> /cart.
+/hv-admin /hv-admin.html 200
+/hv-bot-panel /hv-bot-panel.html 200
+/perfil /profile.html 200
+/minhas-compras /orders.html 200
+/loja /store.html 200
+/carrinho /cart.html 200
